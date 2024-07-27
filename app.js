@@ -8,10 +8,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function uploadImage() {
     const fileInput = document.getElementById("file-input");
+    const nameInput = document.getElementById("name-input");
+    const divisionInput = document.getElementById("division-input");
+
     const file = fileInput.files[0];
+    const name = nameInput.value.trim();
+    const division = divisionInput.value.trim();
 
     if (!file) {
       alert("Please select a file.");
+      return;
+    }
+
+    if (!name) {
+      alert("Please enter a name.");
+      return;
+    }
+
+    if (!division) {
+      alert("Please enter a division.");
       return;
     }
 
@@ -24,17 +39,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (error) throw error;
 
       const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/stokimage/${fileName}`;
-      displayImage(imageUrl);
-      saveImageUrlToDatabase(imageUrl);
+      displayImage(imageUrl, name, division);
+      saveImageUrlToDatabase(imageUrl, name, division);
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Failed to upload file.");
     }
   }
 
-  async function saveImageUrlToDatabase(url) {
+  async function saveImageUrlToDatabase(url, name, division) {
     try {
-      const { data, error } = await supabase.from("images").insert([{ url }]);
+      const { data, error } = await supabase
+        .from("images")
+        .insert([{ url, name, division }]);
 
       if (error) throw error;
 
@@ -44,12 +61,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function displayImage(url) {
+  function displayImage(url, name, division) {
     const img = document.createElement("img");
     img.src = url;
+    const div = document.createElement("div");
+    div.textContent = `Name: ${name}, Division: ${division}`;
     const imageContainer = document.getElementById("image-container");
     imageContainer.appendChild(img);
+    imageContainer.appendChild(div);
+  }
+
+  async function loadImages() {
+    try {
+      const { data, error } = await supabase
+        .from("images")
+        .select("url, name, division");
+
+      if (error) throw error;
+
+      data.forEach((image) => {
+        displayImage(image.url, image.name, image.division);
+      });
+    } catch (error) {
+      console.error("Error loading images from database:", error);
+    }
   }
 
   document.getElementById("upload-btn").addEventListener("click", uploadImage);
+
+  loadImages();
 });
