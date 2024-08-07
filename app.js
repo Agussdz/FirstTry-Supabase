@@ -6,6 +6,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  async function checkAuth() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) {
+      console.log("User is logged in:", session.user.email);
+      document.getElementById("auth-container").style.display = "none";
+      document.getElementById("content-container").style.display = "block";
+      document.getElementById("status-message").innerText =
+        "Welcome, " + session.user.email;
+      document.getElementById("logout-btn").style.display = "block";
+      loadImages(); // Pastikan loadImages dipanggil di sini
+    } else {
+      console.log("No user is logged in");
+      document.getElementById("auth-container").style.display = "block";
+      document.getElementById("content-container").style.display = "none";
+      document.getElementById("status-message").innerText = "Anda harus login";
+      document.getElementById("logout-btn").style.display = "none";
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById("email-input").value;
+    const password = document.getElementById("password-input").value;
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      alert("Login failed: " + error.message);
+    } else {
+      checkAuth();
+    }
+  }
+
+  async function signup() {
+    const email = document.getElementById("email-input").value;
+    const password = document.getElementById("password-input").value;
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      alert("Signup failed: " + error.message);
+    } else {
+      alert(
+        "Signup successful. Please check your email for a confirmation link."
+      );
+    }
+  }
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert("Logout failed: " + error.message);
+    } else {
+      checkAuth();
+    }
+  }
+
   async function uploadImage() {
     const fileInput = document.getElementById("file-input");
     const nameInput = document.getElementById("name-input");
@@ -88,6 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("upload-btn").addEventListener("click", uploadImage);
+  document.getElementById("login-btn").addEventListener("click", login);
+  document.getElementById("signup-btn").addEventListener("click", signup);
+  document.getElementById("logout-btn").addEventListener("click", logout);
 
-  loadImages();
+  checkAuth();
 });
