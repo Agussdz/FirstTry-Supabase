@@ -21,6 +21,6 @@ document
     if (error) {
       alert("Login failed: " + error.message);
     } else {
-      window.location.href = "edit.html";
+      window.location.href = "Edit.html";
     }
   });
